@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#This script uses qualimap in conda.
+#SBATCH --job-name=05_qualimap_J35395-S1-_L1_S92_L002
+#SBATCH --nodes=1
+#SBATCH --tasks-per-node=1
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=16G
+#SBATCH --time=4:00:00
+#SBATCH --output=/gxfs_work2/geomar/smomw426/cod3/05_QC/qualimap/J35395-S1-_L1_S92_L002.out
+#SBATCH --error=/gxfs_work2/geomar/smomw426/cod3/05_QC/qualimap/J35395-S1-_L1_S92_L002.err
+#SBATCH --partition=cluster
+#SBATCH --qos=express
+## qos - normal, long, express(max time 12h), test(max time 2h), to see the list >sacctmgr show qos
+#SBATCH --mail-user=khan@geomar.de
+#SBATCH --mail-type=FAIL
+#SBATCH --export=NONE
+
+source ~/.bashrc
+cd /gxfs_work2/geomar/smomw426/cod3/05_QC/qualimap
+module load miniconda3
+conda activate pop
+qualimap bamqc -bam /gxfs_work2/geomar/smomw426/cod3/04_dedup/J35395-S1-_L1_S92_L002_clean_dedup.bam -outdir /gxfs_work2/geomar/smomw426/cod3/05_QC/qualimap/J35395-S1-_L1_S92_L002 --java-mem-size=16G

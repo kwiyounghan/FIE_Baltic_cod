@@ -1,0 +1,54 @@
+#this script creates files for each individual, , and runs those files after creating them.
+#input is _unmapped.bam and output is  _unmapped_xt.bam
+#mkdir /sfs/fs1/work-geomar/smomw426/cod_mod2/scripts/02_markilluminaadapters_ones
+
+export PROJECT=/gxfs_work1/geomar/smomw426/cod_mod2
+export uBAM=/gxfs_work1/geomar/smomw426/cod_mod2/01_fastq2ubam/*_unmapped.bam #inputfiles
+#export REFGEN=/gxfs_work1/geomar/smomw426/cod2/ref/gadMor2.nu.fasta
+
+cd $PROJECT/02_markilluminaadapters
+
+for i in $uBAM ; do
+    if [[ $i =~ /gxfs_work1/geomar/smomw426/cod_mod2/01_fastq2ubam/(.*)_unmapped.bam ]]; # ${BASH_REMATCH[1]} J32532-L1_S1
+    then
+		#create a file with shebang and add PBS info
+		echo '#!/bin/bash' > $PROJECT/scripts/02_markilluminaadapters_ones/02_markilluminaadapters_${BASH_REMATCH[1]}.sh
+		export file=$PROJECT/scripts/02_markilluminaadapters_ones/02_markilluminaadapters_${BASH_REMATCH[1]}.sh
+    echo '#SBATCH --job-name=MarkIlluminaAdapters'  >> $file
+    echo '#SBATCH --nodes=1'  >> $file
+    echo '#SBATCH --tasks-per-node=1'  >> $file
+    echo '#SBATCH --cpus-per-task=32'  >> $file
+    echo '#SBATCH --mem=96G'  >> $file
+    echo '#SBATCH --time=6:00:00'  >> $file
+    echo "#SBATCH --output=markilluminaadapters_${BASH_REMATCH[1]}.out"  >> $file
+    echo "#SBATCH --error=markilluminaadapters_${BASH_REMATCH[1]}.err"  >> $file
+    echo '#SBATCH --partition=cluster'  >> $file
+    echo '#SBATCH --qos=express'  >> $file
+    echo '## qos - normal, long, express(max time 12h), test(max time 2h), to see the list >sacctmgr show qos'  >> $file
+    echo '#SBATCH --mail-user=khan@geomar.de'  >> $file
+    echo '#SBATCH --mail-type=ALL'  >> $file
+    echo '#SBATCH --export=NONE'  >> $file
+    echo ''  >> $file
+
+		echo "cd $PROJECT/02_markilluminaadapters"  >> $file
+    echo "source ~/.bashrc"  >> $file
+    echo "module load openjdk/11.0.2"  >> $file
+    echo ''  >> $file
+
+		echo "echo $i marking adapters"  >> $file
+		echo "java -Xmx72G -jar /gxfs_home/geomar/smomw426/software/picard.jar MarkIlluminaAdapters \\"  >> $file
+		echo "	I=$i \\"  >> $file
+		echo "	O=$PROJECT/02_markilluminaadapters/${BASH_REMATCH[1]}_unmapped_xt.bam \\"  >> $file
+		echo "	M=$PROJECT/02_markilluminaadapters/${BASH_REMATCH[1]}_unmapped_xt_metrics.txt \\"  >> $file
+		echo "	TMP_DIR=$WORK/temp_dir/"  >> $file
+
+
+		sbatch $file
+
+
+
+
+
+	fi
+
+done

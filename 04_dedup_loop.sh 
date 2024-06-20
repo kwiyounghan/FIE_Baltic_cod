@@ -1,0 +1,137 @@
+#this script creates a file for each individual, , and runs those files after creating them.
+#input is _clean.bam and output is  _clean_dedup.bam
+#mkdir $PROJECT/scripts/04_dedup_ones
+export PROJECT=/gxfs_work2/geomar/smomw426/cod3
+export ANAL=$PROJECT/04_dedup
+export REFGEN=/gxfs_work1/geomar/smomw426/cod3/ref/GCF_902167405.1_gadMor3.0_genomic.fna
+export cBAM=$PROJECT/03_map_clean/*_clean.bam #inputfiles
+
+cd $ANAL
+## because of the different sequencing sames, I had to create if loops to adjust
+# NOR0203170103_clean.bam
+# KIE11020020101_clean.bam
+# J35431-S1-L1_S128_L002_clean.bam
+# J32539-L1_S8_L001_clean.bam
+# 89-89-AL207-539_S35_L004_clean.bam
+mkdir $PROJECT/scripts/04_dedup_ones
+for i in $cBAM ; do
+    if [[ $i =~ $PROJECT/03_map_clean/(.*)L1_(.*)_clean.bam ]]; # ${BASH_REMATCH[0]} J35434-S1-L1_S131_L002_clean.bam J35420-S1-L1_S117_L002_clean.bam
+    then
+      if [[ ! -f "${BASH_REMATCH[1]}_L1_${BASH_REMATCH[2]}_clean_dedup_metrics.txt" ]]; then
+		#create a file with shebang and add slurm info
+    echo '#!/bin/bash' > $PROJECT/scripts/04_dedup_ones/04_dedup_${BASH_REMATCH[1]}_L1_${BASH_REMATCH[2]}.sh
+		export file=$PROJECT/scripts/04_dedup_ones/04_dedup_${BASH_REMATCH[1]}_L1_${BASH_REMATCH[2]}.sh
+    echo "#SBATCH --job-name=dedup_${BASH_REMATCH[1]}_L1_${BASH_REMATCH[2]}"  >> $file
+    echo '#SBATCH --nodes=1'  >> $file
+    echo '#SBATCH --tasks-per-node=1'  >> $file
+    echo '#SBATCH --cpus-per-task=32'  >> $file
+    echo '#SBATCH --mem=96G'  >> $file
+    echo '#SBATCH --time=6:00:00'  >> $file
+    echo "#SBATCH --output=dedup_${BASH_REMATCH[1]}_L1_${BASH_REMATCH[2]}.out"  >> $file
+    echo "#SBATCH --error=dedup_${BASH_REMATCH[1]}_L1_${BASH_REMATCH[2]}.err"  >> $file
+    echo '#SBATCH --partition=cluster'  >> $file
+    echo '#SBATCH --qos=express'  >> $file
+    echo '## qos - normal, long, express(max time 12h), test(max time 2h), to see the list >sacctmgr show qos'  >> $file
+    echo '#SBATCH --mail-user=khan@geomar.de'  >> $file
+    echo '#SBATCH --mail-type=FAIL'  >> $file
+    echo '#SBATCH --export=NONE'  >> $file
+    echo '' >> $file
+
+    echo "cd $ANAL" >> $file
+    echo 'source ~/.bashrc' >> $file
+    echo 'module load openjdk/11.0.2' >> $file
+    echo '' >> $file
+
+		echo "echo $i deduplicating" >> $file
+		echo "java -Xmx72G -jar $HOME/software/picard.jar MarkDuplicates \\"  >> $file
+		echo "      I=$i \\"  >> $file
+		echo "      O=${BASH_REMATCH[1]}_L1_${BASH_REMATCH[2]}_clean_dedup.bam \\"  >> $file
+		echo "      CREATE_INDEX=true \\"  >> $file
+		echo "      METRICS_FILE=${BASH_REMATCH[1]}_L1_${BASH_REMATCH[2]}_clean_dedup_metrics.txt \\"  >> $file
+		echo "      MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 TMP_DIR=$WORK2/temp_dir"  >> $file
+    echo 'jobinfo' >> $file
+
+		sbatch $file
+    sleep 3s
+    fi
+  elif [[ $i =~ $PROJECT/03_map_clean/(.*)_L004_clean.bam ]]; then #89-89-AL207-539_S35_L004_clean.bam
+      if [[ ! -f "${BASH_REMATCH[1]}_L004_${BASH_REMATCH[2]}_clean_dedup_metrics.txt" ]]; then
+    #create a file with shebang and add slurm info
+    echo '#!/bin/bash' > $PROJECT/scripts/04_dedup_ones/04_dedup_${BASH_REMATCH[1]}_L004.sh
+    export file=$PROJECT/scripts/04_dedup_ones/04_dedup_${BASH_REMATCH[1]}_L004.sh
+    echo "#SBATCH --job-name=dedup_${BASH_REMATCH[1]}_L004"  >> $file
+    echo '#SBATCH --nodes=1'  >> $file
+    echo '#SBATCH --tasks-per-node=1'  >> $file
+    echo '#SBATCH --cpus-per-task=32'  >> $file
+    echo '#SBATCH --mem=96G'  >> $file
+    echo '#SBATCH --time=6:00:00'  >> $file
+    echo "#SBATCH --output=dedup_${BASH_REMATCH[1]}_L004.out"  >> $file
+    echo "#SBATCH --error=dedup_${BASH_REMATCH[1]}_L004.err"  >> $file
+    echo '#SBATCH --partition=cluster'  >> $file
+    echo '#SBATCH --qos=express'  >> $file
+    echo '## qos - normal, long, express(max time 12h), test(max time 2h), to see the list >sacctmgr show qos'  >> $file
+    echo '#SBATCH --mail-user=khan@geomar.de'  >> $file
+    echo '#SBATCH --mail-type=FAIL'  >> $file
+    echo '#SBATCH --export=NONE'  >> $file
+    echo '' >> $file
+
+    echo "cd $ANAL" >> $file
+    echo 'source ~/.bashrc' >> $file
+    echo 'module load openjdk/11.0.2' >> $file
+    echo '' >> $file
+
+    echo "echo $i deduplicating" >> $file
+    echo "java -Xmx72G -jar $HOME/software/picard.jar MarkDuplicates \\"  >> $file
+    echo "      I=$i \\"  >> $file
+    echo "      O=${BASH_REMATCH[1]}_L004_clean_dedup.bam \\"  >> $file
+    echo "      CREATE_INDEX=true \\"  >> $file
+    echo "      METRICS_FILE=${BASH_REMATCH[1]}_L004_clean_dedup_metrics.txt \\"  >> $file
+    echo "      MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 TMP_DIR=$WORK2/temp_dir"  >> $file
+    echo 'jobinfo' >> $file
+
+    sbatch $file
+    sleep 3s
+    fi
+  elif [[ $i =~ $PROJECT/03_map_clean/(.*)_clean.bam ]]; then # ${BASH_REMATCH[1]} J32532-L1_S1
+
+
+      j=${BASH_REMATCH[1]:0:10}
+          if [[ ! -f "${j}_clean_dedup_metrics.txt" ]]; then
+      input=$(ls $PROJECT/03_map_clean/${j}*_clean.bam | sed ':a;N;$!ba;s/\n/ I=/g')
+      echo '#!/bin/bash' > $PROJECT/scripts/04_dedup_ones/04_dedup_${j}.sh
+      export file=$PROJECT/scripts/04_dedup_ones/04_dedup_${j}.sh
+      echo "#SBATCH --job-name=dedup_${j}"  >> $file
+      echo '#SBATCH --nodes=1'  >> $file
+      echo '#SBATCH --tasks-per-node=1'  >> $file
+      echo '#SBATCH --cpus-per-task=32'  >> $file
+      echo '#SBATCH --mem=96G'  >> $file
+      echo '#SBATCH --time=6:00:00'  >> $file
+      echo "#SBATCH --output=dedup_${j}.out"  >> $file
+      echo "#SBATCH --error=dedup_${j}.err"  >> $file
+      echo '#SBATCH --partition=cluster'  >> $file
+      echo '#SBATCH --qos=express'  >> $file
+      echo '## qos - normal, long, express(max time 12h), test(max time 2h), to see the list >sacctmgr show qos'  >> $file
+      echo '#SBATCH --mail-user=khan@geomar.de'  >> $file
+      echo '#SBATCH --mail-type=FAIL'  >> $file
+      echo '#SBATCH --export=NONE'  >> $file
+      echo '' >> $file
+
+      echo "cd $ANAL" >> $file
+      echo 'source ~/.bashrc' >> $file
+      echo 'module load openjdk/11.0.2' >> $file
+      echo '' >> $file
+
+      echo "echo $j deduplicating" >> $file
+      echo "java -Xmx72G -jar $HOME/software/picard.jar MarkDuplicates \\"  >> $file
+      echo "      I=$input \\"  >> $file
+      echo "      O=${j}_clean_dedup.bam \\"  >> $file
+      echo "      CREATE_INDEX=true \\"  >> $file
+      echo "      METRICS_FILE=${j}_clean_dedup_metrics.txt \\"  >> $file
+      echo "      MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 TMP_DIR=$WORK2/temp_dir"  >> $file
+      echo 'jobinfo' >> $file
+      sbatch $file
+      sleep 3s
+      fi
+	fi
+
+done

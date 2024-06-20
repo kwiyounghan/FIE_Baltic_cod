@@ -1,0 +1,83 @@
+// set up a simple neutral simulation
+  initialize()
+     {
+       // some constants. all should be defined as arguments on the command line
+       defineConstant("chrSz", L); // chromosome size in bp
+       defineConstant("popSz", ne); // population size , should be 2xNe from msprime
+       defineConstant("recomb", r); // recombination rate, Morgan per bp (1e-8 = 1 cM/Mbp)
+       defineConstant("mut", m); // mutation rate
+       defineConstant("outfile", o); // base output file name
+       defineConstant("infile", i); // input file name
+
+       //defineConstant("simID", getSeed()); // save this run's identifier, used to save files
+
+       initializeSLiMOptions(mutationRuns=1);
+
+       // set the overall mutation rate
+       initializeMutationRate(mut); // m1 mutation type: neutral
+
+       // for nucleotide-based model , SLiM stacks mutations as 0123.. while msprime vcf produces variations annotated as nucleotide seq ATGC..
+       // if i need this information, I need to use nucleotide based model in SLiM
+       // initializeAncestralNucleotides(randomNucleotides(chrSz));
+       // initializeSLiMOptions(nucleotideBased=T);
+       initializeMutationType("m1", 0.5, "f", 0.0);
+       m1.convertToSubstitution = F;
+       // g1 genomic element type: uses m1 for all mutations
+       initializeGenomicElementType("g1", m1, 1.0); // uniform chromosome of length 10 mb
+       initializeGenomicElement(g1, 0, chrSz-1);
+       // uniform recombination along the chromosome
+       initializeRecombinationRate(recomb);
+
+
+
+     }
+
+// create a population of size popSz (2xNe) individuals
+  1
+  {
+    //number of individuals not genomes, should match the number in the vcf file
+    sim.addSubpop("p1", popSz);
+    p1.genomes.readFromVCF(infile, m1); // read in sites from msprime burn-in
+
+  }
+
+
+100 late() {
+    // output the final vcf file
+    p1.genomes.outputVCF(outfile+"_full_t1.vcf");
+
+    sampledIndividuals = sample(p1.individuals, 20);
+    sampledIndividuals.genomes.outputVCF(outfile + "_sampled_t1.vcf");
+}
+
+101 late() {
+    // output the final vcf file
+    p1.genomes.outputVCF(outfile+"_full_t2.vcf");
+
+    sampledIndividuals = sample(p1.individuals, 20);
+    sampledIndividuals.genomes.outputVCF(outfile + "_sampled_t2.vcf");
+}
+
+102 late() {
+    // output the final vcf file
+    p1.genomes.outputVCF(outfile+"_full_t3.vcf");
+
+    sampledIndividuals = sample(p1.individuals, 20);
+    sampledIndividuals.genomes.outputVCF(outfile + "_sampled_t3.vcf");
+}
+
+103 late() {
+    // output the final vcf file
+    p1.genomes.outputVCF(outfile+"_full_t4.vcf");
+
+    sampledIndividuals = sample(p1.individuals, 20);
+    sampledIndividuals.genomes.outputVCF(outfile + "_sampled_t4.vcf");
+}
+
+104 late() {
+    // output the final vcf file
+    p1.genomes.outputVCF(outfile+"_full_t5.vcf");
+
+    sampledIndividuals = sample(p1.individuals, 20);
+    sampledIndividuals.genomes.outputVCF(outfile + "_sampled_t5.vcf");
+}

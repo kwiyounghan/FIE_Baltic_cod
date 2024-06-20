@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#SBATCH --job-name=cod_sim
+#SBATCH --nodes=1
+#SBATCH --tasks-per-node=1
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=128G
+#SBATCH --time=12:00:00
+#SBATCH --output=cod_sim_slim_neutral.out
+#SBATCH --error=cod_sim_slim_neutral.err
+#SBATCH --partition=cluster
+#SBATCH --qos=express
+## qos - normal, long (10days), express(max time 12h), test(max time 2h), to see the list >sacctmgr show qos
+#SBATCH --mail-user=khan@geomar.de
+#SBATCH --mail-type=FAIL
+#SBATCH --export=NONE
+
+source ~/.bashrc
+export WORK2=/gxfs_work2/geomar/smomw426
+export ANAL=$WORK2/cod_sim/01_neutral
+
+module load miniconda3
+conda activate slim
+cd $ANAL
+
+export input=/gxfs_work2/geomar/smomw426/cod_sim/00_burnin/msprime_burnin_n5000_5000000_1.64e-8_1.5e-7.vcf
+
+export mutationRate=1.64e-8 ## value from Matschiner et al 2022
+export recombinationRate=1.5e-7
+export chrLen=5000000
+export ndiploid=5000
+
+
+for k in {1..100}
+do
+  mkdir 'SimRepID'$k
+  cd 'SimRepID'$k
+  echo $k
+  slim -d L=$chrLen \
+  -d ne=$ndiploid \
+  -d r=$recombinationRate \
+  -d m=$mutationRate \
+  -d "o='neutral_$k'" \
+  -d "i='${input}'" \
+  -d SimRepID=$k \
+  /gxfs_work2/geomar/smomw426/cod_sim/scripts/01_neutral.slim > slim_output_neutral_SimRepID$k.txt
+
+  cd ../
+done
+
+jobinfo
