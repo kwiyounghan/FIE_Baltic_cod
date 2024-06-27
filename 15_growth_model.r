@@ -373,46 +373,54 @@ sum(data.jags$age==1);sum(data.jags$age==2);sum(data.jags$age==3);sum(data.jags$
 #----------------------------
 # 7.condition and growth? 
 #----------------------------
-length(df$weight)
-length(data.jags$fish.length)
-length(out$BUGSoutput$median$linf.i)
+weight <- df$weight
+length <- data.jags$fish.length
 phi <- log(out$BUGSoutput$median$k.i,base=10) + 2 * log(out$BUGSoutput$median$linf.i,base=10)
-condition <-( 100* (df$weight ))/ (data.jags$fish.length /10)^3
-
-condition_mat <- data.frame(condition,phi,linf = out$BUGSoutput$median$linf.i, k=out$BUGSoutput$median$k.i, pop=data.jags$ID.bin)
-head(condition_mat)
+length_weight <- lm(log(weight) ~ log(length))
+length_weight
+#a = exp(intercept), b = coefficient(log(length))
+a <- exp(length_weight$coefficients[1])
+b <- length_weight$coefficients[2]
+relative_condition <- (weight)/ (a*((length)^b))
+condition_mat <- data.frame(relative_condition,phi,linf = out$BUGSoutput$median$linf.i, k=out$BUGSoutput$median$k.i, pop=data.jags$ID.bin)
 condition_mat$pop <- as.factor(condition_mat$pop)
+#condition_mat$pop <- as.numeric(condition_mat$pop)
 # write.table(condition_mat,file="condition_matrix.csv",quote=F)
+condition <- relative_condition
 cor.test(out$BUGSoutput$median$k.i,condition)
 # 	Pearson's product-moment correlation
+
 # data:  out$BUGSoutput$median$k.i and condition
-# t = -1.2611, df = 152, p-value = 0.2092
+# t = -0.39285, df = 152, p-value = 0.695
 # alternative hypothesis: true correlation is not equal to 0
 # 95 percent confidence interval:
-#  -0.25580412  0.05732276
+#  -0.1890567  0.1269518
 # sample estimates:
-#        cor 
-# -0.1017605 
+#         cor 
+# -0.03184837 
 cor.test(out$BUGSoutput$median$linf.i,condition)
 # 	Pearson's product-moment correlation
+
 # data:  out$BUGSoutput$median$linf.i and condition
-# t = 2.5105, df = 152, p-value = 0.0131
+# t = 1.1609, df = 152, p-value = 0.2475
 # alternative hypothesis: true correlation is not equal to 0
 # 95 percent confidence interval:
-#  0.04272036 0.34675067
+#  -0.06538704  0.24822347
 # sample estimates:
-#       cor 
-# 0.1995329 
+#        cor 
+# 0.09374308 
 cor.test(phi,condition)
 # 	Pearson's product-moment correlation
+
 # data:  phi and condition
-# t = 2.4314, df = 152, p-value = 0.0162
+# t = 1.1472, df = 152, p-value = 0.2531
 # alternative hypothesis: true correlation is not equal to 0
 # 95 percent confidence interval:
-#  0.0364427 0.3412071
+#  -0.06648378  0.24718953
 # sample estimates:
-#       cor 
-# 0.1934881 
+#        cor 
+# 0.09265112
+#test <- lm(cbind(phi,linf,k) ~ relative_condition,data=condition_mat) ## if multiple regression
 
 ## PLOT
 png(filename ="conditions.png",width=7,height=7,units="in",res=1200 )
