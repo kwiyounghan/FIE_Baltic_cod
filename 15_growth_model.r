@@ -368,3 +368,84 @@ sum(data.jags$age==1);sum(data.jags$age==2);sum(data.jags$age==3);sum(data.jags$
 # [1] 38
 # [1] 14
 # [1] 1
+
+
+#----------------------------
+# 7.condition and growth? 
+#----------------------------
+length(df$weight)
+length(data.jags$fish.length)
+length(out$BUGSoutput$median$linf.i)
+phi <- log(out$BUGSoutput$median$k.i,base=10) + 2 * log(out$BUGSoutput$median$linf.i,base=10)
+condition <-( 100* (df$weight ))/ (data.jags$fish.length /10)^3
+
+condition_mat <- data.frame(condition,phi,linf = out$BUGSoutput$median$linf.i, k=out$BUGSoutput$median$k.i, pop=data.jags$ID.bin)
+head(condition_mat)
+condition_mat$pop <- as.factor(condition_mat$pop)
+# write.table(condition_mat,file="condition_matrix.csv",quote=F)
+cor.test(out$BUGSoutput$median$k.i,condition)
+# 	Pearson's product-moment correlation
+# data:  out$BUGSoutput$median$k.i and condition
+# t = -1.2611, df = 152, p-value = 0.2092
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+#  -0.25580412  0.05732276
+# sample estimates:
+#        cor 
+# -0.1017605 
+cor.test(out$BUGSoutput$median$linf.i,condition)
+# 	Pearson's product-moment correlation
+# data:  out$BUGSoutput$median$linf.i and condition
+# t = 2.5105, df = 152, p-value = 0.0131
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+#  0.04272036 0.34675067
+# sample estimates:
+#       cor 
+# 0.1995329 
+cor.test(phi,condition)
+# 	Pearson's product-moment correlation
+# data:  phi and condition
+# t = 2.4314, df = 152, p-value = 0.0162
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+#  0.0364427 0.3412071
+# sample estimates:
+#       cor 
+# 0.1934881 
+
+## PLOT
+png(filename ="conditions.png",width=7,height=7,units="in",res=1200 )
+par(mfrow=c(2,2),oma=c(1,1,2,1),mar=c(4,4,2,2))
+boxplot(condition~data.jags$ID.bin,ylab="condition", names=c("1996","2002","2008","2014","2019"),ylim=c(0.6,1.3), col=colors, cex.lab=1.5, cex.axis=1, font = 2, font.lab = 2,xlab="",gap.axis=0.5)
+title(main="A",line=0.5,adj=0,cex=4,font=2)
+text(x=2,y=1.25,labels="*")
+plot(out$BUGSoutput$median$k.i ~ condition, col=colors[data.jags$ID.bin],cex=1.5, pch=16, xlab="condition",ylab="growth coefficient k",cex.lab=1.5)
+title(main="B",line=0.5,adj=0,cex=4,font=2)
+plot(out$BUGSoutput$median$linf.i ~ condition, col=colors[data.jags$ID.bin],cex=1.5, pch=16, xlab="condition",ylab=expression("L"[infinity]),cex.lab=1.5)
+title(main="C",line=0.5,adj=0,cex=4,font=2)
+plot(phi~ condition, col=colors[data.jags$ID.bin],cex=1.5, pch=16, xlab="condition",ylab="growth performance index phi",cex.lab=1.5)
+title(main="D",line=0.5,adj=0,cex=4,font=2)
+par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0.2, 0), mar = c(0, 0, 0, 0), new = TRUE)
+plot(0, 0, type = 'l', bty = 'n', xaxt = 'n', yaxt = 'n')
+legend("top",legend=c("1996","2002","2008","2014","2019"),col=colors,pch=16,pt.cex=2,cex=1,bg="transparent",y.intersp=0.8,horiz=T)
+dev.off()
+
+
+# anova test
+oneway.test(condition ~ pop,
+            data = condition_mat,
+            var.equal = TRUE # assuming equal variances
+)#F = 4.0426, num df = 4, denom df = 149, p-value = 0.003848
+
+res_aov <- aov(condition ~ pop,
+               data = condition_mat
+)
+summary(res_aov)
+# Df Sum Sq Mean Sq F value  Pr(>F)   
+# pop           4 0.3209 0.08024   4.043 0.00385 **
+#   Residuals   149 2.9573 0.01985 
+# As you can see from the two outputs above, the test statistic (F = in the first method and F value in the second one) and 
+# the p-value (p-value in the first method and Pr(>F) in the second one) are exactly the same for both methods, 
+# which means that in case of equal variances, results and conclusions will be unchanged.
+#install.packages("multcomp")
